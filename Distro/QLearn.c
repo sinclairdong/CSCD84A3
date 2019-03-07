@@ -38,7 +38,8 @@ struct Node{
 	struct Node *next; 
 };
 
-
+const double SMALL_NUMBER = -99999;
+const double LARGE_NUMBER = 99999;
 
 //insert a node into a priority queue implemented using linkedlist
 struct Node* insert_P(int x, int y, int cost, Node * head){
@@ -288,12 +289,12 @@ double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats
 
     if((mouseX == catX) && (mouseY == catY))
     {
-    	return -99999;
+    	return SMALL_NUMBER;
     }
     
     if((mouseX == cheeseX) && (mouseY == cheeseY))
     {
-    	return 99999;
+    	return LARGE_NUMBER;
     }
 
     int movability = 0;
@@ -339,8 +340,26 @@ void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double 
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/ 
-          
-      
+   
+	int *maxA;
+
+	double features[25], qsa;
+	double *maxU; 
+	*maxU = SMALL_NUMBER;
+
+
+	for (int i = 0; i < 25; i++) {
+		features[i] = 0;
+	}
+
+	maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, maxU, maxA);
+	evaluateFeatures(gr, features, mouse_pos, cats, cheeses, size_X, graph_size);
+	qsa = Qsa(weights, features);
+
+	for (int n = 0; n < numFeatures; n++) {
+		// weight update
+		weights[n] += alpha*(reward + lambda*(*maxU) - qsa)*(features[n]);
+	}
 }
 
 int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, int size_X, int graph_size)
@@ -366,7 +385,9 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
 	// test the random
 	int result;
 	int random = rand() % 100; // get a random number between 0 -100 and compare with pct
-	int* max; // the pointer poiting to the largest value
+
+	int *maxA;
+	double *maxU;
 	int location = cord_to_number(mouse_pos[0][0], mouse_pos[0][1], size_X);
 	
 	if(random > pct * 100){
@@ -375,10 +396,11 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
 			result = rand() % 4;
 		}while(gr[location][result] == 0);
 	}else{
-		// to do pick the best result;
+		maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, maxU, maxA);
+    	result = *maxA;
 	}
 	
-  return(0);		// <--- replace this while you're at it!
+  return result;		// <--- replace this while you're at it!
 
 }
 
@@ -407,6 +429,7 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
 	total_closest_furthest_average_distance(&features[4], &features[5], &features[6], &features[7], gr, mouse_pos[0], cheeses, size_X);
 	int i ;
    	int location = cord_to_number(mouse_pos[0][0], mouse_pos[0][1], size_X);
+   	// the walls
    	for(i = 0; i < 4; i++){
    		features[8] += gr[location][i];
   	}	
@@ -444,10 +467,66 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
    * TO DO: Complete this function
    ***********************************************************************************************/  
  	int location = cord_to_number(mouse_pos[0][0],mouse_pos[0][1], size_X);
- 	//check top
  	
-  *maxU=0;	// <--- stubs! your code will compute actual values for these two variables!
-  *maxA=0;
+ 	int temp_pos[1][2];// next move
+ 	double temp_Qsa; // store the qsa value
+ 	double features[25];
+ 	
+ 	*maxU= SMALL_NUMBER;	// <--- stubs! your code will compute actual values for these two variables!
+  	*maxA= -1;
+  	//check top
+  	if(gr[location][0] == 1){
+	 	temp_pos[0][0] = mouse_pos[0][0];
+	 	temp_pos[0][1] = mouse_pos[0][1] - 1;
+	 	
+	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
+	 	temp_Qsa = Qsa(weights, features);
+	 	if(temp_Qsa > *maxU){
+	 		*maxU = temp_Qsa;
+	 		*maxA = 0;
+	 	}
+	}
+	
+	// check right
+	if(gr[location][1] == 1){
+	 	temp_pos[0][0] = mouse_pos[0][0] + 1;
+	 	temp_pos[0][1] = mouse_pos[0][1];
+	 	
+	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
+	 	temp_Qsa = Qsa(weights, features);
+	 	if(temp_Qsa > *maxU){
+	 		*maxU = temp_Qsa;
+	 		*maxA = 1;
+	 	}
+	}
+	
+	// check down
+	if(gr[location][2] == 1){
+	 	temp_pos[0][0] = mouse_pos[0][0];
+	 	temp_pos[0][1] = mouse_pos[0][1] + 1;
+	 	
+	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
+	 	temp_Qsa = Qsa(weights, features);
+	 	if(temp_Qsa > *maxU){
+	 		*maxU = temp_Qsa;
+	 		*maxA = 2;
+	 	}
+	}
+ 	
+ 	
+ 		// check left
+	if(gr[location][3] == 1){
+	 	temp_pos[0][0] = mouse_pos[0][0] - 1;
+	 	temp_pos[0][1] = mouse_pos[0][1];
+	 	
+	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
+	 	temp_Qsa = Qsa(weights, features);
+	 	if(temp_Qsa > *maxU){
+	 		*maxU = temp_Qsa;
+	 		*maxA = 3;
+	 	}
+	}
+
   return;
    
 }
