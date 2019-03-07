@@ -47,5 +47,7 @@ void expensiveFeature1(double gr[max_graph_size][4], int path[max_graph_size][2]
 int checkForGoal(int x, int y, int pos[5][2]);
 
 // If you need to add any function prototypes yourself, you can do so *below* this line.
+int a_star(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X);
+
 #endif
 

@@ -31,6 +31,57 @@
 
 #include "QLearn.h"
 
+struct Node{
+	int x;
+	int y;
+	int cost;
+	struct Node *next; 
+};
+
+// function turn a number to xy cord by the fomula given by the hand out
+int cord_to_number(int x_cord, int y_cord, int size_X){
+  return y_cord * size_X + x_cord;
+}
+
+//insert a node into a priority queue implemented using linkedlist
+struct Node* insert_P(int x, int y, int cost, Node * head){
+
+
+	struct Node* result = (struct Node *) malloc(sizeof(struct Node));
+	result->x = x;
+	result->y = y;
+	result->cost = cost;
+	result->next = NULL;
+
+    if (head == NULL){
+         head = result;
+		 return result;
+	}
+
+	if (head->cost > result->cost){
+		result->next = head;
+		return result;
+	}
+	
+	struct Node* temp = head;
+
+	while(temp->next != NULL && result->cost > temp->next->cost){
+		temp = temp->next;
+	}
+	result->next = temp->next;
+	temp->next = result;
+
+	return head;
+}
+
+// remove a node from the linked list and return the pointer to the next node
+struct Node* remove(Node * head){
+	struct Node* result = head->next;
+	free(head);
+	return result;	
+}
+
+
 void QLearn_update(int s, int a, double r, int s_new, double *QTable)
 {
  /*
@@ -50,9 +101,20 @@ void QLearn_update(int s, int a, double r, int s_new, double *QTable)
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/
+   int i = 0;
+   int max_states_to_explore = 4;
+   int max_reward_from_new_state = 0;
+   for(int i = 0; i < max_states_to_explore; i++)
+   {
+   	 int current_state_value = *(QTable+(4*s_new)+i);
+   	 if(current_state_value > max_reward_from_new_state)
+   	 {
+   	 	max_reward_from_new_state = current_state_value;
+   	 }
+   }
 
-  
-}
+   int current_Q_reward = alpha * (r + ((lambda) * (max_reward_from_new_state -  *(QTable+(4*s)+a))));
+} 
 
 int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, double *QTable, int size_X, int graph_size)
 {
@@ -130,8 +192,198 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
    * TO DO: Complete this function
    ***********************************************************************************************/  
 
-  return(0);		// <--- of course, you will change this!
+  int moveIndex = 0;
+  time_t t;
+
+  bool useQtable = false;
+
+  // generates a number between 0 to 100
+  int qPercentage = rand() % 100;
+
+  if(qPercentage < (pct * 100))
+  {
+  	useQtable = true;
+  }
+
+  int mouseX = mouse_pos[0][0];
+  int mouseY = mouse_pos[0][1];
+
+  int catX = cats[0][0];
+  int catY = cats[0][1];
   
+  int cheeseX = cheeses[0][0];
+  int cheeseY = cheeses[0][1];
+
+  int state = (mouseX + (mouseY * size_X)) + ((catX + (catY * size_X)) * graph_size) + ((cheeseX + (cheeseY * size_X)) * graph_size * graph_size);
+  if(useQtable == true)
+  {
+  	int i = 0;
+    int maxStatesToExplore = 4;
+  	for(i = 0; i < 4; i++)
+  	{
+  		if((moveIndex != i) && (*(QTable + (4 * state) + i) > *(QTable + (4 * state) + moveIndex)))
+  		{
+             moveIndex = i;
+  		}
+  	}
+    
+    // return the chosen move according to Q table.
+  	return(moveIndex);
+  }
+  else
+  {
+  	 // get the graph index 
+  	 int graphIndex =  mouseX + (mouseY * size_X);
+  	 // choose a random direction.
+  	 int randomMove = rand() % 4;
+
+     while(gr[graphIndex][randomMove] == 0)
+     {
+     	randomMove = rand() % 4;
+     }
+
+  	 return(randomMove);
+  }
+}
+
+int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X){
+	
+	// return abs(locA[1] - locB[1]) + abs(locA[0] - locB[0]);
+	return a_star(gr,locA,locB, size_X);
+}
+
+int a_star(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X){
+	// if on top of hceese stay where you are
+	// initialize a queue in a form of a linklist
+	struct Node* head;
+	// add current location on queue
+	head = insert_P(locA[0],locA[1], 0, NULL);
+
+	// see how many nodes had been expanded
+	int order = 0;
+	// have somting to keep track of the predecessor and the final chees position
+	// initialize the x value to be -1 to indicate that it hasn't been visited yet
+	int history[max_graph_size][2];
+/*			printf("before_for_loop  %d\n", cord_to_number(head->x,head->y));*/
+/*			printf("x:%d      y:%d    \n",locA[0],locA[1]);*/
+	history[cord_to_number(head->x,head->y, size_X)][1]=0;
+	int goal[2];
+	goal[0] = -1;
+	goal[1] = -1;
+	int i;
+	
+	
+	for(i = 0; i < max_graph_size; i++){
+		history[i][0] = -1;
+	}
+	
+	// now keep looping untill we found the chess or the stack is empty
+	while (head != NULL){
+		// find the graph number converting from cord
+		int graph_location = cord_to_number(head->x,head->y, size_X);
+		
+		// add 4 new node and I can't figure out a way to use a loop to do this
+		// only add it when it has't been added before and it is a connection
+		int new_node_loc;
+		int cost;
+		
+		// top
+		new_node_loc = cord_to_number(head->x,head->y-1, size_X);
+		if((gr[graph_location][0] == 1) && (history[new_node_loc][0] == -1 )){
+		
+			history[new_node_loc][0] = graph_location;
+			history[new_node_loc][1] = history[graph_location][1] + 1;
+			cost = history[new_node_loc][1] + sqrt((locB[0] - head->x) * (locB[0] - head->x) + (locB[1] - head->y - 1) * (locB[1] - head->y - 1));
+			head->next = insert_P(head->x,head->y-1,cost,head->next);
+			
+			if(locB[0] == head->x && locB[1] == head->y - 1){
+				goal[0] = head->x;
+				goal[1] = head->y-1;
+				break;
+			}
+		}
+		
+		// right
+		new_node_loc = cord_to_number(head->x+1,head->y, size_X);
+		if((gr[graph_location][1] == 1) && (history[new_node_loc][0] == -1)){
+			
+			history[new_node_loc][0] = graph_location;
+			history[new_node_loc][1] = history[graph_location][1] + 1;
+			cost = history[new_node_loc][1] + sqrt((locB[0] - head->x + 1) * (locB[0] - head->x + 1) + (locB[1] - head->y) * (locB[1] - head->y));
+			head->next = insert_P(head->x+1,head->y,cost, head->next);
+			
+			if(locB[0] == head->x+1 && locB[1] == head->y){
+				goal[0] = head->x+1;
+				goal[1] = head->y;
+				break;
+			}
+		}	
+		
+		// bottom
+		new_node_loc = cord_to_number(head->x,head->y+1, size_X);
+		if((gr[graph_location][2] == 1) && (history[new_node_loc][0] == -1 )){
+		
+			history[new_node_loc][0] = graph_location;
+			history[new_node_loc][1] = history[graph_location][1] + 1;
+			cost = history[new_node_loc][1] + sqrt((locB[0] - head->x) * (locB[0] - head->x) + (locB[1] - head->y + 1) * (locB[1] - head->y + 1));
+			head->next = insert_P(head->x,head->y+1,cost, head->next);
+
+			if(locB[0] == head->x && locB[1] == head->y + 1){
+				goal[0] = head->x;
+				goal[1] = head->y+1;
+				break;
+			}
+		}	
+		
+		// left
+		new_node_loc = cord_to_number(head->x-1,head->y, size_X);
+		if((gr[graph_location][3] == 1) && (history[new_node_loc][0] == -1)){
+		
+			history[new_node_loc][0] = graph_location;
+			history[new_node_loc][1] = history[graph_location][1] + 1;
+			head->next = insert_P(head->x-1,head->y,cost, head->next);
+			cost = history[new_node_loc][1] + sqrt((locB[0] - head->x - 1) * (locB[0] - head->x - 1) + (locB[1] - head->y) * (locB[1] - head->y));
+
+			if(locB[0] == head->x-1 && locB[1] == head->y){
+				goal[0] = head->x-1;
+				goal[1] = head->y;
+				break;
+			}
+		}
+		// remove the node from the queue ready for next iteration
+		head = remove(head);
+	}
+	// printf("X:%dY:%d\n",goal[0],goal[1]);
+	
+	// free any node that left behind in the stack in case if there is an early exit
+	struct Node* tmp;
+	while (head != NULL)
+    {
+       tmp = head;
+       head = head->next;
+       free(tmp);
+    }
+    // to do- with the goal location use history to trace back all path then update the path then return
+    // find the backward path first
+    int reverse[max_graph_size];
+    int initial_location = cord_to_number(locA[0],locA[1], size_X);
+    int counter = 0;
+    reverse[0] = cord_to_number(goal[0],goal[1], size_X);
+    while(reverse[counter] != initial_location){
+    	reverse[counter+1] = history[reverse[counter]][0];
+    	counter++;
+    }
+
+	return counter;
+
+}
+
+
+int calculateManhattanDistance(int entity1[1][2] , int entity2[1][2])
+{
+	int Xdifference = abs(entity1[0][0] - entity2[0][1]);
+	int Ydifference = abs(entity2[0][0] - entity2[0][1]);
+	return (Xdifference + Ydifference);
 }
 
 double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
@@ -154,7 +406,56 @@ double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats
    * TO DO: Complete this function
    ***********************************************************************************************/ 
 
-  return(0);		// <--- of course, you will change this as well!     
+	  int totalReward = 0;
+    int initialReward = 500;
+    int mouseCatDistance = distance(gr, mouse_pos[0], cats[0], size_X);
+    int mouseCheeseDistance = distance(gr, mouse_pos[0], cheeses[0], size_X);
+
+    int mouseX = mouse_pos[0][0];
+    int mouseY = mouse_pos[0][1];
+
+    int catX = cats[0][0];
+    int catY = cats[0][1];
+
+    int cheeseX = cheeses[0][0];
+    int cheeseY = cheeses[0][1];
+
+    if((mouseX == catX) && (mouseY == catY))
+    {
+    	return -99999;
+    }
+    
+    if((mouseX == cheeseX) && (mouseY == cheeseY))
+    {
+    	return 99999;
+    }
+
+    int movability = 0;
+
+    int graphIndex = mouse_pos[0][0] + (mouse_pos[0][1] * size_X);
+
+    // check the upper coordinate for a wall or out of bounds. 
+    // locations that lead to corners will not be favoured. 
+    int i = 0;
+    while(i < 4)
+    {
+        if(gr[graphIndex][i] == 1)
+        {	
+        	movability += 10;
+        }
+    }
+
+    totalReward += movability;
+
+    int standardDistanceReward = 25;
+    int catDistanceReward = 15;
+    // subtract from the reward based on the distance from the cheese. 
+    totalReward = totalReward - (25 * mouseCheeseDistance);
+
+    // add to the reward based on the distance from the cat.
+    totalReward = totalReward + (25 * mouseCheeseDistance);
+
+    return(totalReward);		// <--- of course, you will change this as well!     
 }
 
 void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double reward, int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
