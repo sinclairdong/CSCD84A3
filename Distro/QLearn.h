@@ -30,7 +30,7 @@
 #define lambda .5			// Discount rate for future rewards
 #define max_graph_size 32*32
 
-#define numFeatures 2			// UPDATE THIS to be the number of features you have
+#define numFeatures 9			// UPDATE THIS to be the number of features you have
 
 // Function prototypes for D84 - Unit 3 - Reinforcement Learning
 void QLearn_update(int s, int a, double r, int s_new, double *QTable);
@@ -48,6 +48,9 @@ int checkForGoal(int x, int y, int pos[5][2]);
 
 // If you need to add any function prototypes yourself, you can do so *below* this line.
 int a_star(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X);
+int cord_to_number(int x_cord, int y_cord, int size_X);
+int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X);
+void total_closest_furthest_average_distance(double *total, double *closest, double *furthest, double *average, double gr[max_graph_size][4], int locA[2], int locB[5][2], int size_X);
 
 #endif
 

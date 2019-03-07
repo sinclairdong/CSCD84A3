@@ -38,10 +38,7 @@ struct Node{
 	struct Node *next; 
 };
 
-// function turn a number to xy cord by the fomula given by the hand out
-int cord_to_number(int x_cord, int y_cord, int size_X){
-  return y_cord * size_X + x_cord;
-}
+
 
 //insert a node into a priority queue implemented using linkedlist
 struct Node* insert_P(int x, int y, int cost, Node * head){
@@ -246,11 +243,249 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
   }
 }
 
+
+
+int calculateManhattanDistance(int entity1[1][2] , int entity2[1][2])
+{
+	int Xdifference = abs(entity1[0][0] - entity2[0][1]);
+	int Ydifference = abs(entity2[0][0] - entity2[0][1]);
+	return (Xdifference + Ydifference);
+}
+
+double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
+{
+  /*
+    This function computes and returns a reward for the state represented by the input mouse, cat, and
+    cheese position. 
+    
+    You can make this function as simple or as complex as you like. But it should return positive values
+    for states that are favorable to the mouse, and negative values for states that are bad for the 
+    mouse.
+    
+    I am providing you with the graph, in case you want to do some processing on the maze in order to
+    decide the reward. 
+        
+    This function should return a maximim/minimum reward when the mouse eats/gets eaten respectively.      
+   */
+
+   /***********************************************************************************************
+   * TO DO: Complete this function
+   ***********************************************************************************************/ 
+
+	  int totalReward = 0;
+    int initialReward = 500;
+    int mouseCatDistance = distance(gr, mouse_pos[0], cats[0], size_X);
+    int mouseCheeseDistance = distance(gr, mouse_pos[0], cheeses[0], size_X);
+
+    int mouseX = mouse_pos[0][0];
+    int mouseY = mouse_pos[0][1];
+
+    int catX = cats[0][0];
+    int catY = cats[0][1];
+
+    int cheeseX = cheeses[0][0];
+    int cheeseY = cheeses[0][1];
+
+    if((mouseX == catX) && (mouseY == catY))
+    {
+    	return -99999;
+    }
+    
+    if((mouseX == cheeseX) && (mouseY == cheeseY))
+    {
+    	return 99999;
+    }
+
+    int movability = 0;
+
+    int graphIndex = mouse_pos[0][0] + (mouse_pos[0][1] * size_X);
+
+    // check the upper coordinate for a wall or out of bounds. 
+    // locations that lead to corners will not be favoured. 
+    int i = 0;
+    while(i < 4)
+    {
+        if(gr[graphIndex][i] == 1)
+        {	
+        	movability += 10;
+        }
+    }
+
+    totalReward += movability;
+
+    int standardDistanceReward = 25;
+    int catDistanceReward = 15;
+    // subtract from the reward based on the distance from the cheese. 
+    totalReward = totalReward - (25 * mouseCheeseDistance);
+
+    // add to the reward based on the distance from the cat.
+    totalReward = totalReward + (25 * mouseCheeseDistance);
+
+    return(totalReward);		// <--- of course, you will change this as well!     
+}
+
+void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double reward, int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
+{
+  /*
+    This function performs the Q-learning adjustment to all the weights associated with your
+    features. Unlike standard Q-learning, you don't receive a <s,a,r,s'> tuple, instead,
+    you receive the current state (mouse, cats, and cheese potisions), and the reward 
+    associated with this action (this is called immediately after the mouse makes a move,
+    so implicit in this is the mouse having selected some action)
+    
+    Your code must then evaluate the update and apply it to the weights in the weight array.    
+   */
+  
+   /***********************************************************************************************
+   * TO DO: Complete this function
+   ***********************************************************************************************/ 
+          
+      
+}
+
+int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, int size_X, int graph_size)
+{
+  /*
+    Similar to its counterpart for standard Q-learning, this function returns the index of the next
+    action to be taken by the mouse.
+    
+    Once more, the 'pct' value controls the percent of time that the function chooses an optimal
+    action given the current policy.
+    
+    E.g. if 'pct' is .15, then 15% of the time the function uses the current weights and chooses
+    the optimal action. The remaining 85% of the time, a random action is chosen.
+    
+    As before, the mouse must never select an action that causes it to walk through walls or leave
+    the maze.    
+   */
+
+  /***********************************************************************************************
+   * TO DO: Complete this function
+   ***********************************************************************************************/        
+
+	// test the random
+	int result;
+	int random = rand() % 100; // get a random number between 0 -100 and compare with pct
+	int* max; // the pointer poiting to the largest value
+	int location = cord_to_number(mouse_pos[0][0], mouse_pos[0][1], size_X);
+	
+	if(random > pct * 100){
+		// make a random move
+		do{
+			result = rand() % 4;
+		}while(gr[location][result] == 0);
+	}else{
+		// to do pick the best result;
+	}
+	
+  return(0);		// <--- replace this while you're at it!
+
+}
+
+void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
+{
+  /*
+   This function evaluates all the features you defined for the game configuration given by the input
+   mouse, cats, and cheese positions. You are free to define up to 25 features. This function will
+   evaluate each, and return all the feature values in the features[] array.
+   
+   Take some time to think about what features would be useful to have, the better your features, the
+   smarter your mouse!
+   
+   Note that instead of passing down the number of cats and the number of cheese chunks (too many parms!)
+   the arrays themselves will tell you what are valid cat/cheese locations.
+   
+   You can have up to 5 cats and up to 5 cheese chunks, and array entries for the remaining cats/cheese
+   will have a value of -1 - check this when evaluating your features!
+  */
+
+   /***********************************************************************************************
+   * TO DO: Complete this function
+   ***********************************************************************************************/      
+   
+	total_closest_furthest_average_distance(&features[0], &features[1], &features[2], &features[3], gr, mouse_pos[0], cats, size_X);
+	total_closest_furthest_average_distance(&features[4], &features[5], &features[6], &features[7], gr, mouse_pos[0], cheeses, size_X);
+	int i ;
+   	int location = cord_to_number(mouse_pos[0][0], mouse_pos[0][1], size_X);
+   	for(i = 0; i < 4; i++){
+   		features[8] += gr[location][i];
+  	}	
+}
+
+double Qsa(double weights[25], double features[25])
+{
+  /*
+    Compute and return the Qsa value given the input features and current weights
+   */
+
+  /***********************************************************************************************
+  * TO DO: Complete this function
+  ***********************************************************************************************/  
+  double result = 0;
+  
+  for(int i = 0; i < numFeatures; i++){
+  	result += weights[i] * features[i];
+  }
+  return result;	// <--- stub! compute and return the Qsa value
+}
+
+void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size, double *maxU, int *maxA)
+{
+ /*
+   Given the state represented by the input positions for mouse, cats, and cheese, this function evaluates
+   the Q-value at all possible neighbour states and returns the max. The maximum value is returned in maxU
+   and the index of the action corresponding to this value is returned in maxA.
+   
+   You should make sure the function does not evaluate moves that would make the mouse walk through a
+   wall. 
+  */
+ 
+   /***********************************************************************************************
+   * TO DO: Complete this function
+   ***********************************************************************************************/  
+ 	int location = cord_to_number(mouse_pos[0][0],mouse_pos[0][1], size_X);
+ 	//check top
+ 	
+  *maxU=0;	// <--- stubs! your code will compute actual values for these two variables!
+  *maxA=0;
+  return;
+   
+}
+
+
+/***************************************************************************************************
+ *  Add any functions needed to compute your features below 
+ *                 ---->  THIS BOX <-----
+ * *************************************************************************************************/
+// function turn a number to xy cord by the fomula given by the hand out
+int cord_to_number(int x_cord, int y_cord, int size_X){
+  return y_cord * size_X + x_cord;
+}
+
+
+void total_closest_furthest_average_distance(double *total, double *closest, double *furthest, double *average, double gr[max_graph_size][4], int locA[2], int locB[5][2], int size_X){
+	int counter = 0;
+	
+	*total = 0;
+	*closest = 0;
+	*furthest = max_graph_size;
+	while(locB[counter][0] != -1 && counter < 5){
+		int temp = distance(gr, locA, locB[counter], size_X);
+		*total += temp;
+		*closest = *closest < temp ? *closest : temp;
+		*furthest = *furthest > temp ? *furthest : temp;
+		counter++;
+	}
+	
+	*average = *total / counter;
+}
+
 int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X){
 	
 	// return abs(locA[1] - locB[1]) + abs(locA[0] - locB[0]);
 	return a_star(gr,locA,locB, size_X);
 }
+
 
 int a_star(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X){
 	// if on top of hceese stay where you are
@@ -377,187 +612,3 @@ int a_star(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X){
 	return counter;
 
 }
-
-
-int calculateManhattanDistance(int entity1[1][2] , int entity2[1][2])
-{
-	int Xdifference = abs(entity1[0][0] - entity2[0][1]);
-	int Ydifference = abs(entity2[0][0] - entity2[0][1]);
-	return (Xdifference + Ydifference);
-}
-
-double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
-{
-  /*
-    This function computes and returns a reward for the state represented by the input mouse, cat, and
-    cheese position. 
-    
-    You can make this function as simple or as complex as you like. But it should return positive values
-    for states that are favorable to the mouse, and negative values for states that are bad for the 
-    mouse.
-    
-    I am providing you with the graph, in case you want to do some processing on the maze in order to
-    decide the reward. 
-        
-    This function should return a maximim/minimum reward when the mouse eats/gets eaten respectively.      
-   */
-
-   /***********************************************************************************************
-   * TO DO: Complete this function
-   ***********************************************************************************************/ 
-
-	  int totalReward = 0;
-    int initialReward = 500;
-    int mouseCatDistance = distance(gr, mouse_pos[0], cats[0], size_X);
-    int mouseCheeseDistance = distance(gr, mouse_pos[0], cheeses[0], size_X);
-
-    int mouseX = mouse_pos[0][0];
-    int mouseY = mouse_pos[0][1];
-
-    int catX = cats[0][0];
-    int catY = cats[0][1];
-
-    int cheeseX = cheeses[0][0];
-    int cheeseY = cheeses[0][1];
-
-    if((mouseX == catX) && (mouseY == catY))
-    {
-    	return -99999;
-    }
-    
-    if((mouseX == cheeseX) && (mouseY == cheeseY))
-    {
-    	return 99999;
-    }
-
-    int movability = 0;
-
-    int graphIndex = mouse_pos[0][0] + (mouse_pos[0][1] * size_X);
-
-    // check the upper coordinate for a wall or out of bounds. 
-    // locations that lead to corners will not be favoured. 
-    int i = 0;
-    while(i < 4)
-    {
-        if(gr[graphIndex][i] == 1)
-        {	
-        	movability += 10;
-        }
-    }
-
-    totalReward += movability;
-
-    int standardDistanceReward = 25;
-    int catDistanceReward = 15;
-    // subtract from the reward based on the distance from the cheese. 
-    totalReward = totalReward - (25 * mouseCheeseDistance);
-
-    // add to the reward based on the distance from the cat.
-    totalReward = totalReward + (25 * mouseCheeseDistance);
-
-    return(totalReward);		// <--- of course, you will change this as well!     
-}
-
-void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double reward, int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
-{
-  /*
-    This function performs the Q-learning adjustment to all the weights associated with your
-    features. Unlike standard Q-learning, you don't receive a <s,a,r,s'> tuple, instead,
-    you receive the current state (mouse, cats, and cheese potisions), and the reward 
-    associated with this action (this is called immediately after the mouse makes a move,
-    so implicit in this is the mouse having selected some action)
-    
-    Your code must then evaluate the update and apply it to the weights in the weight array.    
-   */
-  
-   /***********************************************************************************************
-   * TO DO: Complete this function
-   ***********************************************************************************************/        
-      
-}
-
-int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, int size_X, int graph_size)
-{
-  /*
-    Similar to its counterpart for standard Q-learning, this function returns the index of the next
-    action to be taken by the mouse.
-    
-    Once more, the 'pct' value controls the percent of time that the function chooses an optimal
-    action given the current policy.
-    
-    E.g. if 'pct' is .15, then 15% of the time the function uses the current weights and chooses
-    the optimal action. The remaining 85% of the time, a random action is chosen.
-    
-    As before, the mouse must never select an action that causes it to walk through walls or leave
-    the maze.    
-   */
-
-  /***********************************************************************************************
-   * TO DO: Complete this function
-   ***********************************************************************************************/        
-
-  return(0);		// <--- replace this while you're at it!
-
-}
-
-void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
-{
-  /*
-   This function evaluates all the features you defined for the game configuration given by the input
-   mouse, cats, and cheese positions. You are free to define up to 25 features. This function will
-   evaluate each, and return all the feature values in the features[] array.
-   
-   Take some time to think about what features would be useful to have, the better your features, the
-   smarter your mouse!
-   
-   Note that instead of passing down the number of cats and the number of cheese chunks (too many parms!)
-   the arrays themselves will tell you what are valid cat/cheese locations.
-   
-   You can have up to 5 cats and up to 5 cheese chunks, and array entries for the remaining cats/cheese
-   will have a value of -1 - check this when evaluating your features!
-  */
-
-   /***********************************************************************************************
-   * TO DO: Complete this function
-   ***********************************************************************************************/      
-   
-}
-
-double Qsa(double weights[25], double features[25])
-{
-  /*
-    Compute and return the Qsa value given the input features and current weights
-   */
-
-  /***********************************************************************************************
-  * TO DO: Complete this function
-  ***********************************************************************************************/  
-  
-  return(0);		// <--- stub! compute and return the Qsa value
-}
-
-void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size, double *maxU, int *maxA)
-{
- /*
-   Given the state represented by the input positions for mouse, cats, and cheese, this function evaluates
-   the Q-value at all possible neighbour states and returns the max. The maximum value is returned in maxU
-   and the index of the action corresponding to this value is returned in maxA.
-   
-   You should make sure the function does not evaluate moves that would make the mouse walk through a
-   wall. 
-  */
- 
-   /***********************************************************************************************
-   * TO DO: Complete this function
-   ***********************************************************************************************/  
- 
-  *maxU=0;	// <--- stubs! your code will compute actual values for these two variables!
-  *maxA=0;
-  return;
-   
-}
-
-/***************************************************************************************************
- *  Add any functions needed to compute your features below 
- *                 ---->  THIS BOX <-----
- * *************************************************************************************************/
