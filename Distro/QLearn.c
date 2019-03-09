@@ -44,7 +44,6 @@ const double LARGE_NUMBER = 99999;
 //insert a node into a priority queue implemented using linkedlist
 struct Node* insert_P(int x, int y, int cost, Node * head){
 
-
 	struct Node* result = (struct Node *) malloc(sizeof(struct Node));
 	result->x = x;
 	result->y = y;
@@ -111,7 +110,7 @@ void QLearn_update(int s, int a, double r, int s_new, double *QTable)
    	 }
    }
 
-   int current_Q_reward = alpha * (r + ((lambda) * (max_reward_from_new_state -  *(QTable+(4*s)+a))));
+   *(QTable+(4*s)+a) += alpha * (r + lambda * (max_reward_from_new_state -  *(QTable+(4*s)+a)));
 } 
 
 int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, double *QTable, int size_X, int graph_size)
@@ -189,19 +188,11 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/  
-
-  int moveIndex = 0;
+   int moveIndex = -1;
   time_t t;
-
-  bool useQtable = false;
 
   // generates a number between 0 to 100
   int qPercentage = rand() % 100;
-
-  if(qPercentage < (pct * 100))
-  {
-  	useQtable = true;
-  }
 
   int mouseX = mouse_pos[0][0];
   int mouseY = mouse_pos[0][1];
@@ -213,16 +204,21 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
   int cheeseY = cheeses[0][1];
 
   int state = (mouseX + (mouseY * size_X)) + ((catX + (catY * size_X)) * graph_size) + ((cheeseX + (cheeseY * size_X)) * graph_size * graph_size);
-  if(useQtable == true)
-  {
-  	int i = 0;
+  if(qPercentage < (pct * 100))
+    { 
+    //printf("Using Q table");
+    int i = 0;
     int maxStatesToExplore = 4;
-  	for(i = 0; i < 4; i++)
-  	{
-  		if((moveIndex != i) && (*(QTable + (4 * state) + i) > *(QTable + (4 * state) + moveIndex)))
-  		{
-             moveIndex = i;
-  		}
+  	for(i = 0; i < maxStatesToExplore; i++)
+   	{
+      int graphIndex = mouseX + (mouseY * size_X);
+        if(gr[graphIndex][i] == 1){
+            if(moveIndex < 0){
+                  moveIndex = i;
+            }else{
+                moveIndex = (*(QTable + (4 * state) + i) > *(QTable + (4 * state) + moveIndex)) ? i : moveIndex;
+            }
+        }
   	}
     
     // return the chosen move according to Q table.
@@ -230,20 +226,19 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
   }
   else
   {
-  	 // get the graph index 
-  	 int graphIndex =  mouseX + (mouseY * size_X);
-  	 // choose a random direction.
-  	 int randomMove = rand() % 4;
+     // get the graph index 
+     int graphIndex =  mouseX + (mouseY * size_X);
+     // choose a random direction.
+     int randomMove = rand() % 4;
 
      while(gr[graphIndex][randomMove] == 0)
      {
      	randomMove = rand() % 4;
      }
 
-  	 return(randomMove);
+     return(randomMove);
   }
 }
-
 
 
 int calculateManhattanDistance(int entity1[1][2] , int entity2[1][2])
@@ -268,61 +263,43 @@ double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats
         
     This function should return a maximim/minimum reward when the mouse eats/gets eaten respectively.      
    */
-
-   /***********************************************************************************************
-   * TO DO: Complete this function
-   ***********************************************************************************************/ 
-
-	  int totalReward = 0;
-    int initialReward = 500;
-    int mouseCatDistance = distance(gr, mouse_pos[0], cats[0], size_X);
-    int mouseCheeseDistance = distance(gr, mouse_pos[0], cheeses[0], size_X);
-
-    int mouseX = mouse_pos[0][0];
-    int mouseY = mouse_pos[0][1];
-
-    int catX = cats[0][0];
-    int catY = cats[0][1];
-
-    int cheeseX = cheeses[0][0];
-    int cheeseY = cheeses[0][1];
-
-    if((mouseX == catX) && (mouseY == catY))
-    {
-    	return SMALL_NUMBER;
-    }
+    int distanceFromMouseToCat = (int) distance(gr, mouse_pos[0], cats[0], size_X);
     
-    if((mouseX == cheeseX) && (mouseY == cheeseY))
-    {
-    	return LARGE_NUMBER;
-    }
+    int mouseToCheese = (int) distance(gr, mouse_pos[0], cheeses[0], size_X);
 
-    int movability = 0;
+    int catToCheese = (int) distance(gr, cats[0], cheeses[0], size_X);
+    int mouse_index = mouse_pos[0][0] + (mouse_pos[0][1]*size_X);
+    
+    int movability = -10;
+    int found_cat = 0;
 
-    int graphIndex = mouse_pos[0][0] + (mouse_pos[0][1] * size_X);
+    for (int i = 0; i < 4; i++){
+        if (gr[mouse_index][i] == 1){
+            movability +=2;
+        }
+        if ((mouseToCheese == 0) && (gr[mouse_index][i] == 1)){
+            //printf("CHEESE\n"); 
+            return LARGE_NUMBER;
+        }
 
-    // check the upper coordinate for a wall or out of bounds. 
-    // locations that lead to corners will not be favoured. 
-    int i = 0;
-    while(i < 4)
-    {
-        if(gr[graphIndex][i] == 1)
-        {	
-        	movability += 10;
+        if ((distanceFromMouseToCat == 0) && (gr[mouse_index][i] == 1)){
+        //printf("CAT\n");
+            found_cat = 1;
         }
     }
 
-    totalReward += movability;
+    //If Either one is right beside it, return a large value right away, favoring
+    // cheese first
+    if (found_cat == 1){
+        return SMALL_NUMBER;
+    } 
+    
 
-    int standardDistanceReward = 25;
-    int catDistanceReward = 15;
-    // subtract from the reward based on the distance from the cheese. 
-    totalReward = totalReward - (25 * mouseCheeseDistance);
+    //Otherwise calc some reward other wise
+    double reward = (distanceFromMouseToCat - mouseToCheese)+ (catToCheese - mouseToCheese) + movability;
 
-    // add to the reward based on the distance from the cat.
-    totalReward = totalReward + (25 * mouseCheeseDistance);
-
-    return(totalReward);		// <--- of course, you will change this as well!     
+    
+  return(reward);		// <--- of course, you will change this as well!     
 }
 
 void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double reward, int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
@@ -559,7 +536,8 @@ void total_closest_furthest_average_distance(double *total, double *closest, dou
 	*average = *total / counter;
 }
 
-int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X){
+int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X)
+{
 	
 	// return abs(locA[1] - locB[1]) + abs(locA[0] - locB[0]);
 	return a_star(gr,locA,locB, size_X);
