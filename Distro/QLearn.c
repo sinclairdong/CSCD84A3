@@ -317,26 +317,27 @@ void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double 
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/ 
-   
-	int *maxA;
+   printf("Update start\n");
+	int maxA = -1;
 
 	double features[25], qsa;
-	double *maxU; 
-	*maxU = SMALL_NUMBER;
+	double maxU = 0; 
+
 
 
 	for (int i = 0; i < 25; i++) {
 		features[i] = 0;
 	}
-
-	maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, maxU, maxA);
+    printf("after for\n");
+	maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, &maxU, &maxA);
 	evaluateFeatures(gr, features, mouse_pos, cats, cheeses, size_X, graph_size);
 	qsa = Qsa(weights, features);
 
 	for (int n = 0; n < numFeatures; n++) {
 		// weight update
-		weights[n] += alpha*(reward + lambda*(*maxU) - qsa)*(features[n]);
+		weights[n] += alpha*(reward + lambda*(maxU) - qsa)*(features[n]);
 	}
+	printf("update finish\n");
 }
 
 int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, int size_X, int graph_size)
@@ -358,7 +359,7 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/        
-
+    printf("Action start\n");
 	// test the random
 	int result;
 	int random = rand() % 100; // get a random number between 0 -100 and compare with pct
@@ -376,7 +377,7 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
 		maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, maxU, maxA);
     	result = *maxA;
 	}
-	
+	printf("Action finish\n");
   return result;		// <--- replace this while you're at it!
 
 }
@@ -401,15 +402,22 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/      
-   
+   printf("eva start\n");
+   	int i ;
+   	
+    for(i = 0; i < 25; i++){
+        features[i] = 0;
+    }
+    
 	total_closest_furthest_average_distance(&features[0], &features[1], &features[2], &features[3], gr, mouse_pos[0], cats, size_X);
 	total_closest_furthest_average_distance(&features[4], &features[5], &features[6], &features[7], gr, mouse_pos[0], cheeses, size_X);
-	int i ;
+
    	int location = cord_to_number(mouse_pos[0][0], mouse_pos[0][1], size_X);
    	// the walls
    	for(i = 0; i < 4; i++){
    		features[8] += gr[location][i];
-  	}	
+  	}
+  	printf("Eva fin\n");
 }
 
 double Qsa(double weights[25], double features[25])
@@ -421,12 +429,16 @@ double Qsa(double weights[25], double features[25])
   /***********************************************************************************************
   * TO DO: Complete this function
   ***********************************************************************************************/  
+  printf("QSA start\n");
   double result = 0;
   
   for(int i = 0; i < numFeatures; i++){
+    printf("%f\n", weights[i]);
   	result += weights[i] * features[i];
   }
+    printf("QSA fin %f\n", result);
   return result;	// <--- stub! compute and return the Qsa value
+
 }
 
 void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size, double *maxU, int *maxA)
@@ -443,14 +455,15 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/  
+   printf("Max start\n");
  	int location = cord_to_number(mouse_pos[0][0],mouse_pos[0][1], size_X);
- 	
+
  	int temp_pos[1][2];// next move
  	double temp_Qsa; // store the qsa value
  	double features[25];
- 	
- 	*maxU= SMALL_NUMBER;	// <--- stubs! your code will compute actual values for these two variables!
-  	*maxA= -1;
+ 	double maxU_temp = SMALL_NUMBER;
+ 	int maxA_temp = -1;
+
   	//check top
   	if(gr[location][0] == 1){
 	 	temp_pos[0][0] = mouse_pos[0][0];
@@ -458,12 +471,12 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
 	 	
 	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
 	 	temp_Qsa = Qsa(weights, features);
-	 	if(temp_Qsa > *maxU){
-	 		*maxU = temp_Qsa;
-	 		*maxA = 0;
+	 	if(temp_Qsa > maxU_temp){
+	 		maxU_temp = temp_Qsa;
+	 		maxA_temp = 0;
 	 	}
 	}
-	
+
 	// check right
 	if(gr[location][1] == 1){
 	 	temp_pos[0][0] = mouse_pos[0][0] + 1;
@@ -471,12 +484,12 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
 	 	
 	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
 	 	temp_Qsa = Qsa(weights, features);
-	 	if(temp_Qsa > *maxU){
-	 		*maxU = temp_Qsa;
-	 		*maxA = 1;
+	 	if(temp_Qsa > maxU_temp){
+	 		maxU_temp = temp_Qsa;
+	 		maxA_temp = 1;
 	 	}
 	}
-	
+
 	// check down
 	if(gr[location][2] == 1){
 	 	temp_pos[0][0] = mouse_pos[0][0];
@@ -484,13 +497,13 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
 	 	
 	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
 	 	temp_Qsa = Qsa(weights, features);
-	 	if(temp_Qsa > *maxU){
-	 		*maxU = temp_Qsa;
-	 		*maxA = 2;
+	 	if(temp_Qsa > maxU_temp){
+	 		maxU_temp = temp_Qsa;
+	 		maxA_temp = 2;
 	 	}
 	}
  	
- 	
+
  		// check left
 	if(gr[location][3] == 1){
 	 	temp_pos[0][0] = mouse_pos[0][0] - 1;
@@ -498,12 +511,17 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
 	 	
 	 	evaluateFeatures(gr, features, temp_pos, cats, cheeses, size_X, graph_size);
 	 	temp_Qsa = Qsa(weights, features);
-	 	if(temp_Qsa > *maxU){
-	 		*maxU = temp_Qsa;
-	 		*maxA = 3;
+	 	if(temp_Qsa > maxU_temp){
+	 		maxU_temp = temp_Qsa;
+	 		maxA_temp = 3;
 	 	}
 	}
+	printf(" before assignment %f\n", maxU_temp);
+	*maxA = maxA_temp;
 
+	printf("maxU no problem\n");
+	*maxU = maxU_temp;
+    printf("max finish\n");
   return;
    
 }
@@ -520,13 +538,13 @@ int cord_to_number(int x_cord, int y_cord, int size_X){
 
 
 void total_closest_furthest_average_distance(double *total, double *closest, double *furthest, double *average, double gr[max_graph_size][4], int locA[2], int locB[5][2], int size_X){
-	int counter = 0;
-	
-	*total = 0;
-	*closest = 0;
-	*furthest = max_graph_size;
+	int counter = 1;
+	int temp = distance(gr, locA, locB[0], size_X);
+	*total = temp;
+	*closest = temp;
+	*furthest = temp;
 	while(locB[counter][0] != -1 && counter < 5){
-		int temp = distance(gr, locA, locB[counter], size_X);
+		temp = distance(gr, locA, locB[counter], size_X);
 		*total += temp;
 		*closest = *closest < temp ? *closest : temp;
 		*furthest = *furthest > temp ? *furthest : temp;
