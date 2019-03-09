@@ -38,8 +38,8 @@ struct Node{
 	struct Node *next; 
 };
 
-const double SMALL_NUMBER = -99999;
-const double LARGE_NUMBER = 99999;
+const double SMALL_NUMBER = -99;
+const double LARGE_NUMBER = 99;
 
 //insert a node into a priority queue implemented using linkedlist
 struct Node* insert_P(int x, int y, int cost, Node * head){
@@ -332,10 +332,14 @@ void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double 
 	maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, &maxU, &maxA);
 	evaluateFeatures(gr, features, mouse_pos, cats, cheeses, size_X, graph_size);
 	qsa = Qsa(weights, features);
-
+		printf("reward : %f\n", reward);
+		printf("maxu : %f\n", maxU);
+		printf("qsa : %f\n", qsa); 
 	for (int n = 0; n < numFeatures; n++) {
 		// weight update
-		weights[n] += alpha*(reward + lambda*(maxU) - qsa)*(features[n]);
+      
+		weights[n] += alpha*(reward + (lambda*(maxU)) - qsa)*(features[n]);
+		printf("weight%d: %f, feature:%f\n", n, weights[n], features[n]); 
 	}
 	printf("update finish\n");
 }
@@ -359,7 +363,7 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/        
-    printf("Action start\n");
+
 	// test the random
 	int result;
 	int random = rand() % 100; // get a random number between 0 -100 and compare with pct
@@ -377,7 +381,7 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
 		maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, maxU, maxA);
     	result = *maxA;
 	}
-	printf("Action finish\n");
+
   return result;		// <--- replace this while you're at it!
 
 }
@@ -402,7 +406,7 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/      
-   printf("eva start\n");
+
    	int i ;
    	
     for(i = 0; i < 25; i++){
@@ -417,7 +421,9 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
    	for(i = 0; i < 4; i++){
    		features[8] += gr[location][i];
   	}
-  	printf("Eva fin\n");
+  	
+  	features[8] = sigmoid(features[8]);
+
 }
 
 double Qsa(double weights[25], double features[25])
@@ -429,14 +435,13 @@ double Qsa(double weights[25], double features[25])
   /***********************************************************************************************
   * TO DO: Complete this function
   ***********************************************************************************************/  
-  printf("QSA start\n");
+
   double result = 0;
   
   for(int i = 0; i < numFeatures; i++){
-    printf("%f\n", weights[i]);
   	result += weights[i] * features[i];
   }
-    printf("QSA fin %f\n", result);
+
   return result;	// <--- stub! compute and return the Qsa value
 
 }
@@ -455,7 +460,7 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/  
-   printf("Max start\n");
+
  	int location = cord_to_number(mouse_pos[0][0],mouse_pos[0][1], size_X);
 
  	int temp_pos[1][2];// next move
@@ -516,12 +521,9 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
 	 		maxA_temp = 3;
 	 	}
 	}
-	printf(" before assignment %f\n", maxU_temp);
-	*maxA = maxA_temp;
+	maxA = &maxA_temp;
+	maxU = &maxU_temp;
 
-	printf("maxU no problem\n");
-	*maxU = maxU_temp;
-    printf("max finish\n");
   return;
    
 }
@@ -536,7 +538,9 @@ int cord_to_number(int x_cord, int y_cord, int size_X){
   return y_cord * size_X + x_cord;
 }
 
-
+double sigmoid(double x){
+    return 1 / (1 + x);
+}
 void total_closest_furthest_average_distance(double *total, double *closest, double *furthest, double *average, double gr[max_graph_size][4], int locA[2], int locB[5][2], int size_X){
 	int counter = 1;
 	int temp = distance(gr, locA, locB[0], size_X);
@@ -552,6 +556,11 @@ void total_closest_furthest_average_distance(double *total, double *closest, dou
 	}
 	
 	*average = *total / counter;
+	
+	*average = sigmoid(*average);
+	*total = sigmoid(*total);
+	*closest = sigmoid(*closest);
+	*furthest = sigmoid(*furthest);
 }
 
 int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X)

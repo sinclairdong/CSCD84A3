@@ -51,6 +51,7 @@ int a_star(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X);
 int cord_to_number(int x_cord, int y_cord, int size_X);
 int distance(double gr[max_graph_size][4], int locA[2], int locB[2], int size_X);
 void total_closest_furthest_average_distance(double *total, double *closest, double *furthest, double *average, double gr[max_graph_size][4], int locA[2], int locB[5][2], int size_X);
+double sigmoid(double x);
 
 #endif
 
