@@ -38,8 +38,8 @@ struct Node{
 	struct Node *next; 
 };
 
-const double SMALL_NUMBER = -99;
-const double LARGE_NUMBER = 99;
+const double SMALL_NUMBER = -99999;
+const double LARGE_NUMBER = 99999;
 
 //insert a node into a priority queue implemented using linkedlist
 struct Node* insert_P(int x, int y, int cost, Node * head){
@@ -363,13 +363,13 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/        
-
+     printf("action start\n");
 	// test the random
 	int result;
 	int random = rand() % 100; // get a random number between 0 -100 and compare with pct
 
-	int *maxA;
-	double *maxU;
+	int maxA;
+	double maxU;
 	int location = cord_to_number(mouse_pos[0][0], mouse_pos[0][1], size_X);
 	
 	if(random > pct * 100){
@@ -378,10 +378,12 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
 			result = rand() % 4;
 		}while(gr[location][result] == 0);
 	}else{
-		maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, maxU, maxA);
-    	result = *maxA;
+		maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, &maxU, &maxA);
+		printf("no plz no, %d\n", maxA);
+    	result = maxA;
+    	printf("OMFG\n");
 	}
-
+     printf("action finish\n");
   return result;		// <--- replace this while you're at it!
 
 }
@@ -406,7 +408,7 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/      
-
+     printf("eva start\n");
    	int i ;
    	
     for(i = 0; i < 25; i++){
@@ -423,7 +425,7 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
   	}
   	
   	features[8] = sigmoid(features[8]);
-
+     printf("eva finish\n");
 }
 
 double Qsa(double weights[25], double features[25])
@@ -435,13 +437,13 @@ double Qsa(double weights[25], double features[25])
   /***********************************************************************************************
   * TO DO: Complete this function
   ***********************************************************************************************/  
-
+ printf("qsa start\n");
   double result = 0;
   
   for(int i = 0; i < numFeatures; i++){
   	result += weights[i] * features[i];
   }
-
+ printf("qsa finish\n");
   return result;	// <--- stub! compute and return the Qsa value
 
 }
@@ -460,7 +462,7 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
    /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/  
-
+ printf("Max start\n");
  	int location = cord_to_number(mouse_pos[0][0],mouse_pos[0][1], size_X);
 
  	int temp_pos[1][2];// next move
@@ -523,8 +525,8 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
 	}
 	maxA = &maxA_temp;
 	maxU = &maxU_temp;
-
-  return;
+ printf("max finish %d  %f\n",*maxA,*maxU);
+  // return;
    
 }
 
@@ -539,6 +541,9 @@ int cord_to_number(int x_cord, int y_cord, int size_X){
 }
 
 double sigmoid(double x){
+if(x == -1){
+    printf("divided by 0");
+}
     return 1 / (1 + x);
 }
 void total_closest_furthest_average_distance(double *total, double *closest, double *furthest, double *average, double gr[max_graph_size][4], int locA[2], int locB[5][2], int size_X){
