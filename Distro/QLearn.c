@@ -379,16 +379,16 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
 		// printf("random\n");
 		do{
 			result = rand() % 4;
-			printf("random result: %d\n", result);
+			// printf("random result: %d\n", result);
 		}while(gr[location][result] == 0);
 	}else{
 	    // printf("not random\n");
 		maxQsa(gr, weights, mouse_pos, cats, cheeses, size_X, graph_size, &maxU, &maxA);
 		// printf("no plz no, %d\n", maxA);
     	result = maxA;
-    	printf("%d\n", maxA);
+    	// printf("%d\n", maxA);
     	// printf("OMFG\n");
-    	printf("result: %d\n", result);
+    	// printf("result: %d\n", result);
 	}
     // printf("action finish\n");
 
