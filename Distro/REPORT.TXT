@@ -157,8 +157,7 @@ but explain carefully when needed.
      0.034783 is the rate for first round.
      
      Mouse Winning Rate (from evaluation after training):
-     Evaluation give me -nan for some reason.
-     base on the last round of learning it states 89%
+     67%
 	 
      Compare this rate against the rate obtained in Experiment #5, what
      are your conclusions regarding the utility of feature-based
@@ -166,13 +165,14 @@ but explain carefully when needed.
      
      The initial rates is much worth compare to standard. 
      It is expected as on the first round our weights are random however the number in Qtable is valid(even tho not accurate).
-     The evaluation of Ex5 was 62%, the feature based is almost 
+     The evaluation of Ex5 was 62%, the feature based is 67% the feature based is a bit better
 
      (1 mark) # Experiment 7, using the saved weights from Experiment 6 (no
      # re-training) run the evaluation using random seed 4289, same
      # 1 cheese, 1 cat, and cat-smartness=.9, 16x16 grid
 
      Mouse Winning Rate (from evaluation after training):
+     
 
      (1 mark) # Experiment 8, using the saved weights from Experiment 6 (no
      # re-training) run the evaluation using random seed 31415, same
@@ -185,7 +185,8 @@ but explain carefully when needed.
      based Q-Learning in terms of its ability to deal with changes 
      to the environment?
      
-     Since it is base on the feature thus the enviroment doesn't matter.
+     Since it is base on the feature thus the enviroment doesn't matter 
+     as long it is the same game.
      
 9 .- Carry out the following experiments:
 
@@ -202,6 +203,7 @@ but explain carefully when needed.
      # 3 cheeses, cat-smartness=.9, and random seed 4289
      
      Mouse Winning Rate (from evaluation after training):
+     67% not much change from 1522
 
      (1 mark) # Experiment 9: Using the trained weights from Experiment 9, (no
      # re-training), run the evaluation on the 32x32 grid, 2 cats, 
@@ -212,11 +214,20 @@ but explain carefully when needed.
      (2 marks) Based on the last 3 experiments, what can you conclude regarding
      the usefulness and applicability of standard Q-Learning vs. 
      feature-based Q-learning?
+     Standard Q-Learning might be more accurate especially when you don't have
+     great features or it is too hard to comup with features. However, feature 
+     Q-learning saves a lot of memory space and can dapt to differnt enviroment.
+     They each have different pros and cons. But for this game I believe feature
+     has an edge. 
 
 10 . - (2 marks) We obviously can not train an expensive robot by trial and error,
       How would you implement feature-based Q-learning for a mobile bot so you
       can take advantage of reinforcement learning but not spend millions on
       broken robots that keep falling down the stairs?
+      
+      Start with a simulat envriomen with simulate sensor signals. forexample, instead
+      of using a camera we can feed him pictures. And let the program process the data and 
+      alternate the data. 
       
       
 _____________________________________________________
