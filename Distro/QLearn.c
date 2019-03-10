@@ -476,7 +476,7 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
  	int temp_pos[1][2];// next move
  	double temp_Qsa; // store the qsa value
  	double features[25];
- 	double maxU_temp = SMALL_NUMBER;
+ 	double maxU_temp = SMALL_NUMBER * 1000;
  	int maxA_temp = -1;
 
   	//check top
